@@ -1,22 +1,33 @@
-#include<iostream>
-#include<boost/asio.hpp>
+#include"io_socket.hpp"
+#include<system_error>
 
 namespace ba = boost::asio;
 using tcp = ba::ip::tcp;
 
-int main(int, char**) {
-    try {
-        std::cout << "Start server!" << std::endl;
-        ba::io_service service;
-        tcp::acceptor acceptor(service, tcp::endpoint(tcp::v4(), 1500));
+void run() {
+    std::cout << "Start server!" << std::endl;
+    ba::io_service service;
+    tcp::acceptor acceptor(service, tcp::endpoint(tcp::v4(), 1500));
+    while (true) {
         tcp::socket socket(service);
         acceptor.accept(socket);
-        ba::streambuf buf;
-        ba::read_until(socket, buf, "!");
-        std::cout << "Got msg (" << std::string(ba::buffer_cast<const char*>(buf.data())) << ")" << std::endl;
-        std::string msg("pong");
-        ba::write(socket, ba::buffer(msg + "!"));
-        std::cout << "Sent msg!" << std::endl;
+        const auto resp = read(socket);
+        if (resp == SHUTDOWN_CMD) {
+            write(socket, "ok");
+            break;
+        } else if (resp == PING_CMD) {
+            write(socket, "pong");
+        } else
+            write(socket, resp);
+        std::cout << "Server sent msg!" << std::endl;
+    }
+}
+
+int main(int, char**) {
+    try {
+        run();
+    } catch (const std::exception &e) {
+        std::cout << e.what() << std::endl;
     } catch (...) {
         std::cout << "Something got wrong!" << std::endl;
     }
