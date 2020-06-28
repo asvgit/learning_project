@@ -21,11 +21,7 @@ def read(sock: socket) -> str:
             else:
                 resp = '\n'.join([i for i in resp.split('\n')[1:] if i])
     while (len(sub_res) < size):
-        chunk = sock.recv(1024).decode('utf-8')
-        print(f'\n\ngot chunk {chunk}\n\n')
-        resp += chunk
-        print(f'\n\nnew resp \n{resp}\n\n')
-        # resp += sock.recv(1024).decode('utf-8')
+        resp += sock.recv(1024).decode('utf-8')
         if (resp[-1] == '\n'):
             for i in resp.split('\n'):
                 sub_res.append(i)

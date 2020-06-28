@@ -14,7 +14,7 @@ std::string buf2string(ba::streambuf &buf) {
 } // end of private namespace
 
 std::string read(tcp::socket &socket) {
-    std::cout << "Start read" << std::endl;
+    // std::cout << "Start read" << std::endl;
     int size(0);
     std::string data;
     while (size == 0) {
@@ -27,7 +27,7 @@ std::string read(tcp::socket &socket) {
             data = data.substr(it + 1);
         }
     }
-    std::cout << "Got size (" << size << ")" << std::endl;
+    // std::cout << "Got size (" << size << ")" << std::endl;
     std::string resp;
     while (size > 0) {
         auto it = data.find('\n');
@@ -43,7 +43,7 @@ std::string read(tcp::socket &socket) {
         data += buf2string(buf);
     }
     resp.pop_back();
-    std::cout << "Got msg with size (" << resp.size() << ")" << std::endl;
+    // std::cout << "Got msg with size (" << resp.size() << ")" << std::endl;
     return resp;
 }
 

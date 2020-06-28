@@ -1,6 +1,7 @@
 from os import path
 from subprocess import Popen
 from tools import * # pylint: disable=unused-wildcard-import
+from threading import Thread
 
 
 def test_ping_server():
@@ -12,7 +13,7 @@ def test_multiping_server():
         write_read('ping', 'pong')
     assert_that(is_server_running(), 'server is not running')
 
-@pytest.mark.skip(reason='Unnecessary now')
+# @pytest.mark.skip(reason='Unnecessary now')
 def test_restart_server():
     write_read('shutdown_now', 'ok')
     assert_that(not is_server_running(), 'server is still running')
@@ -39,13 +40,31 @@ def test_echo_matrix_msg():
         assert_that(resps[i], equal_to(msgs[i]))
     assert_that(is_server_running(), 'server is not running')
 
-@pytest.mark.skip(reason='Skip benchmarks')
-def test_benchmark_echo(benchmark):
-    benchmark(write_read, 'no_ping', 'no_ping')
-    assert_that(is_server_running(), 'server is not running')
+class PropagatingThread(Thread):
+    def run(self):
+        self.exc = None
+        try:
+            self.ret = self._target(*self._args, **self._kwargs)
+        except BaseException as e:
+            self.exc = e
 
-@pytest.mark.skip(reason='Skip benchmarks')
-def test_benchmark_echo_matrix_msg(benchmark):
-    n = 100
-    msg = '\n'.join([''.join([str(i) for _ in range(n)]) for i in range(n)])
-    benchmark(write_read, msg)
+    def join(self):
+        super(PropagatingThread, self).join()
+        if self.exc:
+            raise self.exc
+        return self.ret
+
+def test_thread():
+    def f():
+        write_read('ping', 'pong')
+        # print(args)
+        # print(kwargs)
+        # raise Exception('I suck')
+
+    for _ in range(1000):
+        n = 8
+        workers = [PropagatingThread(target=f) for _ in range(n)]
+        for w in workers:
+            w.start()
+        for w in workers:
+            w.join()
