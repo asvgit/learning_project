@@ -7,14 +7,12 @@ using tcp = ba::ip::tcp;
 constexpr int PORT = 1501;
 
 void run() {
-    std::cout << "Start server!" << std::endl;
     ba::io_service service;
     tcp::acceptor acceptor(service, tcp::endpoint(tcp::v4(), PORT));
     while (true) {
         tcp::socket socket(service);
         acceptor.accept(socket);
         const auto resp = read(socket);
-        std::cout << "Got msg with size (" << resp.size() << ")" << std::endl;
         if (resp == SHUTDOWN_CMD) {
             write(socket, "ok");
             break;
@@ -22,11 +20,11 @@ void run() {
             write(socket, "pong");
         } else
             write(socket, resp);
-        std::cout << "Server sent msg!" << std::endl;
     }
 }
 
 int main(int, char**) {
+    std::cout << "Start server!" << std::endl;
     try {
         run();
     } catch (const std::exception &e) {

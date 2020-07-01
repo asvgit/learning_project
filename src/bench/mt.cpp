@@ -24,12 +24,12 @@ void exec() {
         tcp::socket socket(service);
         socket.connect(tcp::endpoint(ba::ip::address::from_string("127.0.0.1"), PORT));
         // write(socket, "ping");
-        write(socket, msg);
-        read(socket);
+        write/*<true>*/(socket, msg);
+        read/*<true>*/(socket);
     }
 }
 
-static void BM_MultithreadPing(benchmark::State& state) {
+static void SimpleServ(benchmark::State& state) {
     const auto proc_count = std::thread::hardware_concurrency() / 2;
     for (auto _ : state) {
         std::vector<std::thread> workers;
@@ -39,9 +39,21 @@ static void BM_MultithreadPing(benchmark::State& state) {
             w.join();
     }
 }
-BENCHMARK(BM_MultithreadPing);
+BENCHMARK(SimpleServ);
 
-static void BM_MultithreadPing2(benchmark::State& state) {
+static void MultithreadServ(benchmark::State& state) {
+    const auto proc_count = std::thread::hardware_concurrency() / 2;
+    for (auto _ : state) {
+        std::vector<std::thread> workers;
+        for (int i(0); i < proc_count; ++i)
+            workers.emplace_back(exec<1502>);
+        for (auto &w : workers)
+            w.join();
+    }
+}
+BENCHMARK(MultithreadServ);
+
+static void AsyncServ(benchmark::State& state) {
     const auto proc_count = std::thread::hardware_concurrency() / 2;
     for (auto _ : state) {
         std::vector<std::thread> workers;
@@ -51,6 +63,6 @@ static void BM_MultithreadPing2(benchmark::State& state) {
             w.join();
     }
 }
-BENCHMARK(BM_MultithreadPing2);
+BENCHMARK(AsyncServ);
 
 BENCHMARK_MAIN();

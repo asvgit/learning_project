@@ -6,6 +6,8 @@
 namespace ba = boost::asio;
 using tcp = ba::ip::tcp;
 
+constexpr int PORT = 1502;
+
 using Workers = std::vector<std::thread>;
 using Queue = std::queue<tcp::socket>;
 static struct {
@@ -30,7 +32,6 @@ void fill_poll(Workers &poll) {
             sync_data.q.pop();
             lk.unlock();
             const auto resp = read(socket);
-            std::cout << "Got msg with size (" << resp.size() << ")" << std::endl;
             if (resp == SHUTDOWN_CMD) {
                 write(socket, "ok");
                 sync_data.shut.store(true);
@@ -38,7 +39,6 @@ void fill_poll(Workers &poll) {
                 write(socket, "pong");
             } else
                 write(socket, resp);
-            std::cout << "Server sent msg!" << std::endl;
         }
     };
     for (int i(0); i < poll_size; ++i)
@@ -47,12 +47,12 @@ void fill_poll(Workers &poll) {
 
 void run() {
     ba::io_service service;
-    tcp::acceptor acceptor(service, tcp::endpoint(tcp::v4(), 1500));
+    tcp::acceptor acceptor(service, tcp::endpoint(tcp::v4(), PORT));
     while (!sync_data.shut.load()) {
         tcp::socket socket(service);
         //TODO: add timeout for shutdown
         acceptor.accept(socket);
-        std::cout << "Socket accepted!" << std::endl;
+        // std::cout << "Socket accepted!" << std::endl;
         std::unique_lock<std::mutex> lk(sync_data.m);
         sync_data.q.emplace(std::move(socket));
         sync_data.cv.notify_one();

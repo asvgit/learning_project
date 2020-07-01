@@ -13,7 +13,7 @@ def test_multiping_server():
         write_read('ping', 'pong')
     assert_that(is_server_running(), 'server is not running')
 
-# @pytest.mark.skip(reason='Unnecessary now')
+@pytest.mark.skip(reason='Unnecessary now')
 def test_restart_server():
     write_read('shutdown_now', 'ok')
     assert_that(not is_server_running(), 'server is still running')
@@ -54,12 +54,10 @@ class PropagatingThread(Thread):
             raise self.exc
         return self.ret
 
+# @pytest.mark.skip(reason='Too long')
 def test_thread():
     def f():
         write_read('ping', 'pong')
-        # print(args)
-        # print(kwargs)
-        # raise Exception('I suck')
 
     for _ in range(1000):
         n = 8

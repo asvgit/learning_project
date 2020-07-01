@@ -10,8 +10,9 @@ int main(int, char**) {
         tcp::socket socket(service);
         socket.connect(tcp::endpoint(ba::ip::address::from_string("127.0.0.1"), 1500));
         write(socket, "ping");
-        std::cout << "Client sent msg!" << std::endl;
-        read(socket);
+        read<true>(socket);
+    } catch (const std::exception &e) {
+        std::cout << e.what() << std::endl;
     } catch (...) {
         std::cout << "Something got wrong!" << std::endl;
     }
