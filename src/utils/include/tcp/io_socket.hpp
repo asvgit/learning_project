@@ -2,6 +2,7 @@
 #include <boost/asio.hpp>
 #include <iostream>
 
+constexpr int BUF_SIZE = 1024;
 constexpr char SHUTDOWN_CMD[] = "shutdown_now";
 constexpr char PING_CMD[] = "ping";
 
