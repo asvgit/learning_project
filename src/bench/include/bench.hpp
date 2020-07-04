@@ -1,9 +1,7 @@
+#pragma once
 #include <benchmark/benchmark.h>
+#include <boost/thread.hpp>
 #include "tcp/io_socket.hpp"
-#include <thread>
-
-namespace ba = boost::asio;
-using tcp = ba::ip::tcp;
 
 static const std::string msg = [] () {
     const int n(100);
@@ -17,8 +15,12 @@ static const std::string msg = [] () {
     return res;
 }();
 
+namespace mt {
+
 template<const int PORT>
 void exec() {
+    namespace ba = boost::asio;
+    using tcp = ba::ip::tcp;
     ba::io_service service;
     for (int i(0); i < 10; ++i) {
         tcp::socket socket(service);
@@ -29,28 +31,18 @@ void exec() {
     }
 }
 
-static void AsyncServ(benchmark::State& state) {
+template<const int PORT>
+void bench(benchmark::State& state) {
     const auto proc_count = std::thread::hardware_concurrency() / 2;
+    std::vector<std::thread> workers;
+    workers.reserve(proc_count);
     for (auto _ : state) {
-        std::vector<std::thread> workers;
         for (int i(0); i < proc_count; ++i)
-            workers.emplace_back(exec<1503>);
+            workers.emplace_back(exec<PORT>);
         for (auto &w : workers)
             w.join();
+        workers.clear();
     }
 }
-BENCHMARK(AsyncServ);
 
-static void MultithreadAsyncServ(benchmark::State& state) {
-    const auto proc_count = std::thread::hardware_concurrency() / 2;
-    for (auto _ : state) {
-        std::vector<std::thread> workers;
-        for (int i(0); i < proc_count; ++i)
-            workers.emplace_back(exec<1504>);
-        for (auto &w : workers)
-            w.join();
-    }
-}
-BENCHMARK(MultithreadAsyncServ);
-
-BENCHMARK_MAIN();
+} // end of mt namespace
