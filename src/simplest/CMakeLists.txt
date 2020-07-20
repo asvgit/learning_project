@@ -1,7 +1,11 @@
 include_directories(include ../utils/include)
 
 set(SIMPLE_SERV simple_serv)
-add_executable(${SIMPLE_SERV} simple_serv.cpp $<TARGET_OBJECTS:lib_tcp>)
+add_executable(${SIMPLE_SERV}
+    simple_serv.cpp
+    $<TARGET_OBJECTS:lib_tcp>
+    $<TARGET_OBJECTS:lib_fs>
+)
 target_link_libraries(${SIMPLE_SERV} ${CONAN_LIBS})
 set_target_properties(${SIMPLE_SERV}
     PROPERTIES

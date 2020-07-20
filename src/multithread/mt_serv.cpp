@@ -1,5 +1,6 @@
 #include <system_error>
 #include "tcp/io_socket.hpp"
+#include "fs/io_file.hpp"
 #include <thread>
 #include <queue>
 
@@ -20,7 +21,7 @@ static struct {
 void fill_poll(Workers &poll) {
     const auto hc = std::thread::hardware_concurrency();
     const auto poll_size = hc / 2 > 0 ? hc / 2 : 1;
-    auto exec = [] () {
+    auto exec = [] (int id) {
         while (true) {
             std::unique_lock<std::mutex> lk(sync_data.m);
             while (sync_data.q.empty() && !sync_data.shut.load()) {
@@ -31,18 +32,23 @@ void fill_poll(Workers &poll) {
             auto socket = std::move(sync_data.q.front());
             sync_data.q.pop();
             lk.unlock();
-            const auto resp = read(socket);
+            const auto resp = net::read(socket);
             if (resp == SHUTDOWN_CMD) {
-                write(socket, "ok");
+                net::write(socket, "ok");
                 sync_data.shut.store(true);
             } else if (resp == PING_CMD) {
-                write(socket, "pong");
-            } else
-                write(socket, resp);
+                net::write(socket, "pong");
+            } else {
+                net::write(socket, resp);
+                for (int i(10); i; --i) {
+                    fs::write(resp, std::string("mt_") + std::to_string(id) + std::string("_") + DEF_FILE);
+                    auto file_data = fs::read();
+                }
+            }
         }
     };
     for (int i(0); i < poll_size; ++i)
-        poll.emplace_back(exec);
+        poll.emplace_back(exec, i);
 }
 
 void run() {

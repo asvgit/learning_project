@@ -47,6 +47,8 @@ std::string read_body(tcp::socket &socket, std::size_t size, const std::string &
 
 } // end of private namespace
 
+namespace net {
+
 template<>
 std::string read<false>(tcp::socket &socket) {
     int size;
@@ -65,4 +67,6 @@ std::string read<true>(tcp::socket &socket) {
     auto resp = read_body(socket, size, data);
     std::cout << "Got msg with size (" << resp.size() << ")" << std::endl;
     return resp;
+}
+
 }

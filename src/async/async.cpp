@@ -1,7 +1,9 @@
 #include "async.hpp"
+#include "fs/io_file.hpp"
+#include <atomic>
+
 
 namespace async {
-
 
 Server::Server(ba::io_context &io_context, const int port)
         : acceptor(io_context, tcp::endpoint(tcp::v4(), port)) { do_accept(); }
@@ -10,15 +12,16 @@ void Server::do_accept() {
     acceptor.async_accept(
         [this](boost::system::error_code ec, tcp::socket socket)
     {
+        static std::atomic_int count = {0};
         if (!ec) {
-            std::make_shared<Session>(std::move(socket))->async_read_head();
+            std::make_shared<Session>(std::move(socket), ++count)->async_read_head();
         }
         do_accept();
     });
 }
 
-Server::Session::Session(tcp::socket sock)
-        : socket(std::move(sock)), buf(BUF_SIZE, '\0') {}
+Server::Session::Session(tcp::socket sock, int ind)
+        : socket(std::move(sock)), id(ind), buf(BUF_SIZE, '\0') {}
 
 void Server::Session::async_read_head() {
     socket.async_read_some(boost::asio::buffer(buf),
@@ -50,7 +53,9 @@ void Server::Session::handle(int size) {
     if (!msg_size) {
         // std::cout << "Got msg size (" << data.size() << ")" << std::endl;
         // std::cout << "Got msg (" << data << ")" << std::endl;
-        async_write();
+        // socket.get_executor().post();
+        // async_write();
+        async_fs_write();
     } else
         async_read_body();
 }
@@ -83,6 +88,29 @@ void Server::Session::async_write() {
         // else
         //     std::cout << "Sent msg!" << std::endl;
     });
+}
+
+// void io_fs(boost::asio::io_context &context, int id, int count) {
+void Server::Session::async_fs_read() {
+    // socket.get_executor().post([this, self = shared_from_this()]() {
+    boost::asio::post(socket.get_executor(), [this, self = shared_from_this()]() {
+        fs::read(std::string("async_") + std::to_string(id) + std::string("_") + DEF_FILE);
+        async_fs_write();
+    });
+}
+
+void Server::Session::async_fs_write() {
+    if (fs_counter > 0) {
+        boost::asio::post(socket.get_executor(), [this, self = shared_from_this()]() {
+        // socket.get_executor().post([this, self = shared_from_this()]() {
+            fs::write(data, std::string("async_") + std::to_string(id) + std::string("_") + DEF_FILE);
+            --fs_counter;
+            // std::cout << "Work id(" << id << ") cout(" << fs_counter << ")" << std::endl; 
+            async_fs_read();
+        });
+        return;
+    }
+    async_write();
 }
 
 } // end of async namespace

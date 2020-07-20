@@ -26,8 +26,8 @@ void exec() {
         tcp::socket socket(service);
         socket.connect(tcp::endpoint(ba::ip::address::from_string("127.0.0.1"), PORT));
         // write(socket, "ping");
-        write/*<true>*/(socket, msg);
-        read/*<true>*/(socket);
+        net::write/*<true>*/(socket, msg);
+        net::read/*<true>*/(socket);
     }
 }
 

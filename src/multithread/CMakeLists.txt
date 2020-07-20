@@ -1,6 +1,10 @@
 SET(MT_PROJECT mt_serv)
 
-add_executable(${MT_PROJECT} mt_serv.cpp $<TARGET_OBJECTS:lib_tcp>)
+add_executable(${MT_PROJECT}
+    mt_serv.cpp
+    $<TARGET_OBJECTS:lib_tcp>
+    $<TARGET_OBJECTS:lib_fs>
+)
 target_link_libraries(${MT_PROJECT} ${CONAN_LIBS})
 include_directories(include ../utils/include)
 set_target_properties(${MT_PROJECT}

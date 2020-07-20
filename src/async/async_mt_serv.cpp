@@ -11,8 +11,8 @@ int main(int, char**) {
         auto exec = [](boost::asio::io_context &io_context) {
             io_context.run();
         };
-        // const auto proc_count = std::thread::hardware_concurrency();
-        const auto proc_count(2);
+        const auto proc_count = std::thread::hardware_concurrency();
+        // const auto proc_count(2);
         std::cout << "threads " << proc_count << std::endl;
         std::vector<std::thread> workers;;
         for (int i(0); i < proc_count; ++i)

@@ -1,5 +1,6 @@
 #include <system_error>
 #include "tcp/io_socket.hpp"
+#include "fs/io_file.hpp"
 
 namespace ba = boost::asio;
 using tcp = ba::ip::tcp;
@@ -12,14 +13,19 @@ void run() {
     while (true) {
         tcp::socket socket(service);
         acceptor.accept(socket);
-        const auto resp = read(socket);
+        const auto resp = net::read(socket);
         if (resp == SHUTDOWN_CMD) {
-            write(socket, "ok");
+            net::write(socket, "ok");
             break;
         } else if (resp == PING_CMD) {
-            write(socket, "pong");
-        } else
-            write(socket, resp);
+            net::write(socket, "pong");
+        } else {
+            net::write(socket, resp);
+            for (int i(10); i; --i) {
+                fs::write(resp);
+                auto file_data = fs::read();
+            }
+        }
     }
 }
 
