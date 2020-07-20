@@ -6,20 +6,17 @@ conan_basic_setup()
 
 LIST(APPEND SKIP_LIST
     async
-    multithread
-    bench
     simplest
+    multithread
+    misc
+    bench
 )
 
 MACRO(ADD_SUBDIRS CURDIR)
     FILE(GLOB CHILDREN RELATIVE ${CURDIR} ${CURDIR}/*)
     FOREACH(CHILD ${CHILDREN})
-        IF(NOT ${CHILD} IN_LIST SKIP_LIST)
-            MESSAGE("MSG " ${CHILD})
-        ENDIF()
         SET(DIR_ITEM ${CURDIR}/${CHILD})
-        IF(IS_DIRECTORY ${DIR_ITEM}
-                AND NOT ("${DIR_ITEM}" STREQUAL "${PROJECT_SOURCE_DIR}/src/utils"))
+        IF(IS_DIRECTORY ${DIR_ITEM} AND (NOT ${CHILD} IN_LIST SKIP_LIST))
             ADD_SUBDIRECTORY(${DIR_ITEM})
         ENDIF()
     ENDFOREACH()
